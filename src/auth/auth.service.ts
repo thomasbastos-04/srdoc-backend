@@ -1,7 +1,7 @@
 import {
-  BadRequestException,
-  Injectable,
-  UnauthorizedException,
+    BadRequestException,
+    Injectable,
+    UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
@@ -12,83 +12,83 @@ import { LoginDto } from './dto/login.dto';
 
 @Injectable()
 export class AuthService {
-  private readonly saltRounds = 10;
+    private readonly saltRounds = 10;
 
-  constructor(
-    private readonly usersService: UsersService,
-    private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
-  ) {}
+    constructor(
+        private readonly usersService: UsersService,
+        private readonly jwtService: JwtService,
+        private readonly configService: ConfigService,
+    ) { }
 
-  async register(dto: RegisterDto) {
-    const existing = await this.usersService.findByEmail(dto.email);
-    if (existing) {
-      throw new BadRequestException('E-mail já está em uso.');
+    async register(dto: RegisterDto) {
+        const existing = await this.usersService.findByEmail(dto.email);
+        if (existing) {
+            throw new BadRequestException('E-mail já está em uso.');
+        }
+
+        const passwordHash = await bcrypt.hash(dto.password, this.saltRounds);
+
+        const user = await this.usersService.create({
+            name: dto.name,
+            email: dto.email,
+            passwordHash,
+        });
+
+        const tokens = await this.generateTokens(user.id, user.email);
+        return {
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+            },
+            ...tokens,
+        };
     }
 
-    const passwordHash = await bcrypt.hash(dto.password, this.saltRounds);
+    async login(dto: LoginDto) {
+        const user = await this.usersService.findByEmail(dto.email);
+        if (!user) {
+            throw new UnauthorizedException('Credenciais inválidas.');
+        }
 
-    const user = await this.usersService.create({
-      name: dto.name,
-      email: dto.email,
-      passwordHash,
-    });
+        const passwordValid = await bcrypt.compare(dto.password, user.passwordHash);
+        if (!passwordValid) {
+            throw new UnauthorizedException('Credenciais inválidas.');
+        }
 
-    const tokens = await this.generateTokens(user.id, user.email);
-    return {
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-      },
-      ...tokens,
-    };
-  }
-
-  async login(dto: LoginDto) {
-    const user = await this.usersService.findByEmail(dto.email);
-    if (!user) {
-      throw new UnauthorizedException('Credenciais inválidas.');
+        const tokens = await this.generateTokens(user.id, user.email);
+        return {
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+            },
+            ...tokens,
+        };
     }
 
-    const passwordValid = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!passwordValid) {
-      throw new UnauthorizedException('Credenciais inválidas.');
+    async refreshTokens(userId: string, email: string) {
+        return this.generateTokens(userId, email);
     }
 
-    const tokens = await this.generateTokens(user.id, user.email);
-    return {
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-      },
-      ...tokens,
-    };
-  }
+    private async generateTokens(userId: string, email: string) {
+        const jwtConfig = this.configService.get('jwt');
 
-  async refreshTokens(userId: string, email: string) {
-    return this.generateTokens(userId, email);
-  }
+        const payload = { sub: userId, email };
 
-  private async generateTokens(userId: string, email: string) {
-    const jwtConfig = this.configService.get('jwt');
+        const accessToken = await this.jwtService.signAsync(payload, {
+            secret: jwtConfig.accessSecret,
+            expiresIn: jwtConfig.accessExpiresIn,
+        });
 
-    const payload = { sub: userId, email };
+        const refreshToken = await this.jwtService.signAsync(payload, {
+            secret: jwtConfig.refreshSecret,
+            expiresIn: jwtConfig.refreshExpiresIn,
+        });
 
-    const accessToken = await this.jwtService.signAsync(payload, {
-      secret: jwtConfig.accessSecret,
-      expiresIn: jwtConfig.accessExpiresIn,
-    });
-
-    const refreshToken = await this.jwtService.signAsync(payload, {
-      secret: jwtConfig.refreshSecret,
-      expiresIn: jwtConfig.refreshExpiresIn,
-    });
-
-    return {
-      accessToken,
-      refreshToken,
-    };
-  }
+        return {
+            accessToken,
+            refreshToken,
+        };
+    }
 }

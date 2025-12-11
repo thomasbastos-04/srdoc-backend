@@ -32,7 +32,6 @@ export class AuthController {
     @Get('me')
     @UseGuards(JwtAuthGuard)
     async me(@GetUser() user: any) {
-        // user: { userId, email } da strategy
         return user;
     }
 }
