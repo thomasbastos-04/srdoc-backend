@@ -5,11 +5,9 @@ using SrDoc.Api.Models;
 
 namespace SrDoc.Api.Data;
 
-// Note que IdentityDbContext sem o <IdentityUser> assume o padrão
-public class AppDbContext : IdentityDbContext<IdentityUser> 
-{
+public class AppDbContext : IdentityDbContext<IdentityUser> {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-    public DbSet<Documento> Documentos { get; set; }
-    public DbSet<Assinante> Assinantes { get; set; }
+    public DbSet<Document> Documents { get; set; }
+    public DbSet<Signatory> Signatories { get; set; }
 }

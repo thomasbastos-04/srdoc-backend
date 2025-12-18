@@ -1,19 +1,12 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-WORKDIR /app
-EXPOSE 80
-
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["SrDoc.Api/SrDoc.Api.csproj", "SrDoc.Api/"]
-RUN dotnet restore "SrDoc.Api/SrDoc.Api.csproj"
+COPY ["SrDoc.Api.csproj", "."]
+RUN dotnet restore
 COPY . .
-WORKDIR "/src/SrDoc.Api"
-RUN dotnet build "SrDoc.Api.csproj" -c Release -o /app/build
+RUN dotnet publish -c Release -o /app/publish
 
-FROM build AS publish
-RUN dotnet publish "SrDoc.Api.csproj" -c Release -o /app/publish
-
-FROM base AS final
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /app/publish .
+EXPOSE 80
 ENTRYPOINT ["dotnet", "SrDoc.Api.dll"]
