@@ -2,10 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: srdoc-api
-  labels:
-    app: srdoc-api
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: srdoc-api
@@ -16,20 +14,26 @@ spec:
     spec:
       containers:
       - name: srdoc-api
-        # A tag :$(Build.BuildId) será injetada pelo pipeline
-        image: srdocregistry.azurecr.io/srdoc-api:latest 
+        image: srdoc.azurecr.io/srdoc-api:v1
         ports:
-        - containerPort: 80
+        - containerPort: 8080
         env:
-        - name: DB_CONNECTION_STRING
+        - name: ConnectionStrings__DefaultConnection
           valueFrom:
             secretKeyRef:
               name: srdoc-db-secret
-              key: connection-string
-        resources:
-          requests:
-            cpu: "100m"
-            memory: "256Mi"
-          limits:
-            cpu: "500m"
-            memory: "512Mi"
+              key: ConnectionStrings__DefaultConnection
+        - name: ASPNETCORE_ENVIRONMENT
+          value: "Development"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: srdoc-service
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: srdoc-api

@@ -11,7 +11,11 @@ var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING"
                        ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(connectionString, sqlOptions => 
+        sqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
+            errorNumbersToAdd: null)));
 
 builder.Services.AddIdentityApiEndpoints<IdentityUser>()
     .AddEntityFrameworkStores<AppDbContext>();
@@ -34,5 +38,10 @@ app.UseAuthorization();
 
 app.MapGroup("/api/auth").MapIdentityApi<IdentityUser>();
 app.MapControllers();
-
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "SrDoc API v1");
+    c.RoutePrefix = string.Empty; 
+});
 app.Run();
