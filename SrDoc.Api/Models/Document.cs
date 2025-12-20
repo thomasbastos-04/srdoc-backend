@@ -8,6 +8,7 @@ public class Document
     public string Title { get; set; } = string.Empty;
     public string Content { get; set; } = string.Empty;
     public DocumentType Type { get; set; }
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; }
+    public string CreatorId { get; set; } = string.Empty; // Novo campo
     public List<Signatory> Signatories { get; set; } = new();
 }

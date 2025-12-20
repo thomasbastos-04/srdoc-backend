@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: srdoc-api-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: srdoc-api # Deve ser exatamente igual ao label definido no deployment.yml
+  ports:
+    - protocol: TCP
+      port: 80        # Porta que será acessada via IP Público
+      targetPort: 80  # Porta que a aplicação .NET está ouvindo no container
