@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: srdoc-api
+  labels:
+    app: srdoc-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: srdoc-api
+  template:
+    metadata:
+      labels:
+        app: srdoc-api
+    spec:
+      containers:
+      - name: srdoc-api
+        # A tag :$(Build.BuildId) será injetada pelo pipeline
+        image: srdocregistry.azurecr.io/srdoc-api:latest 
+        ports:
+        - containerPort: 80
+        env:
+        - name: DB_CONNECTION_STRING
+          valueFrom:
+            secretKeyRef:
+              name: srdoc-db-secret
+              key: connection-string
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
