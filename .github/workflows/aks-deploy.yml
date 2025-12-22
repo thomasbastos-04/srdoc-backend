@@ -1,0 +1,49 @@
+name: Build and Deploy to AKS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    # 1. Login no Azure (Essencial para o contexto do AKS)
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    # 2. Login no ACR (srdoc.azurecr.io)
+    - name: Azure Container Registry Login
+      uses: azure/docker-login@v1
+      with:
+        login-server: srdoc.azurecr.io
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+
+    # 3. Build e Push da Imagem com Tag Única (SHA)
+    - name: Build and push image to ACR
+      run: |
+        docker build -t srdoc.azurecr.io/srdoc-api:${{ github.sha }} .
+        docker push srdoc.azurecr.io/srdoc-api:${{ github.sha }}
+
+    # 4. Configura o contexto do kubectl para o cluster aks-srdoc
+    - name: Set AKS Context
+      uses: azure/aks-set-context@v3
+      with:
+        resource-group: srdoc
+        cluster-name: aks-srdoc
+
+    # 5. Deploy dos manifestos (Ajustado para a pasta /manifests)
+    - name: Deploy to AKS
+      uses: azure/k8s-deploy@v4
+      with:
+        manifests: |
+          ./manifests/deployment.yml
+          ./manifests/service.yml
+        images: |
+          srdoc.azurecr.io/srdoc-api:${{ github.sha }}
+          
