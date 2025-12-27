@@ -27,8 +27,13 @@ jobs:
     # 3. Build e Push da Imagem com Tag Única (SHA)
     - name: Build and push image to ACR
       run: |
-        docker build -t srdoc.azurecr.io/srdoc-api:${{ github.sha }} .
+        docker build \
+          -t srdoc.azurecr.io/srdoc-api:${{ github.sha }} \
+          -f SrDoc.Api/Dockerfile \
+          SrDoc.Api
+
         docker push srdoc.azurecr.io/srdoc-api:${{ github.sha }}
+
 
     # 4. Configura o contexto do kubectl para o cluster aks-srdoc
     - name: Set AKS Context
