@@ -225,6 +225,9 @@ namespace SrDoc.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -238,6 +241,9 @@ namespace SrDoc.Api.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -245,6 +251,9 @@ namespace SrDoc.Api.Data.Migrations
 
                     b.Property<int>("Type")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -257,7 +266,7 @@ namespace SrDoc.Api.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("DocumentId")
+                    b.Property<Guid>("DocumentId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Email")
@@ -265,16 +274,10 @@ namespace SrDoc.Api.Data.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.Property<bool>("HasSigned")
-                        .HasColumnType("bit");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
-
-                    b.Property<DateTime?>("SignedAt")
-                        .HasColumnType("datetime2");
 
                     b.HasKey("Id");
 
@@ -336,9 +339,13 @@ namespace SrDoc.Api.Data.Migrations
 
             modelBuilder.Entity("SrDoc.Api.Models.Signatory", b =>
                 {
-                    b.HasOne("SrDoc.Api.Models.Document", null)
+                    b.HasOne("SrDoc.Api.Models.Document", "Document")
                         .WithMany("Signatories")
-                        .HasForeignKey("DocumentId");
+                        .HasForeignKey("DocumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Document");
                 });
 
             modelBuilder.Entity("SrDoc.Api.Models.Document", b =>
